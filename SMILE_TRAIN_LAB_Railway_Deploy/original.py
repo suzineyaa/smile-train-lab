@@ -573,7 +573,7 @@ def apply_creepy_distortion(img, face_landmarks):
     h, w = img.shape[:2]
     landmarks = np.array([(int(lm.x * w), int(lm.y * h)) for lm in face_landmarks], dtype=np.int32)
     # The original effect tinted the *entire* screen, not only the face.
-    cv2.addWeighted(img, 0.7, (np.zeros_like(img) + (0, 0, 255)).astype(np.uint8), 0.3, 0, dst=img)
+    cv2.addWeighted(img, 0.7, np.broadcast_to(np.array([0, 0, 255], dtype=np.uint8), img.shape).copy(), 0.3, 0, dst=img)
     # Preserve original 60px falloff, 45px maximum displacement and 51px mask blur.
     margin = 200
     x1 = max(0, int(landmarks[:, 0].min()) - margin)
@@ -1215,7 +1215,7 @@ with FaceLandmarker.create_from_options(options) as landmarker:
                     draw_hi = ImageDraw.Draw(region_hi)
                     font_hi = get_valid_font(38 * scale, use_heavy=True)
                     draw_hi.text(((hint_x - left) * scale, (hint_y - top) * scale),
-                                 easy_hint, font=font_hi, fill=(0, 0, 255),
+                                 easy_hint, font=font_hi, fill=(255, 0, 0),
                                  stroke_width=1, stroke_fill=(255, 255, 255))
                     region = region_hi.resize(region.size, Image.Resampling.BILINEAR)
                     hint_pil.paste(region, (left, top))
