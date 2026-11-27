@@ -55,7 +55,8 @@ def worker_main(camera_q, key_q, frame_q, event_q):
             def isOpened(self): return True
 
         def send_frame(name, img):
-            ok, buf = cv2.imencode('.jpg', img, [int(cv2.IMWRITE_JPEG_QUALITY), 83])
+            static = bool(np.mean(np.all(img[::16, ::16] == img[0, 0], axis=2)) > .55)
+            ok, buf = cv2.imencode('.png', img, [cv2.IMWRITE_PNG_COMPRESSION, 1]) if static else cv2.imencode('.jpg', img, [int(cv2.IMWRITE_JPEG_QUALITY), 90])
             if ok:
                 try: frame_q.put_nowait(buf.tobytes())
                 except queue.Full:
@@ -211,7 +212,7 @@ class Handler(SimpleHTTPRequestHandler):
             s = self.protected()
             if not s:return
             s.poll()
-            if path == '/api/frame': self.reply(s.frame or b'','image/jpeg',200 if s.frame else 204)
+            if path == '/api/frame': self.reply(s.frame or b'','image/png' if s.frame and s.frame.startswith(b'\x89PNG') else 'image/jpeg',200 if s.frame else 204)
             elif path == '/api/card': self.reply(s.card or b'','image/png',200 if s.card else 204)
             else: self.reply(s.error.encode())
             return
