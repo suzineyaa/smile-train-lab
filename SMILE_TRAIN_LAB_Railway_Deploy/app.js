@@ -32,13 +32,13 @@ async function originalStart(){
   stream=await navigator.mediaDevices.getUserMedia({video:{width:{ideal:1280},height:{ideal:720},frameRate:{ideal:30,max:30}},audio:false});
   if(stopped||token!==run){stream.getTracks().forEach(t=>t.stop());return}
   video.srcObject=stream;await video.play();
-  let c=document.createElement('canvas');c.width=video.videoWidth;c.height=video.videoHeight;
+  let c=document.createElement('canvas');c.width=Math.min(960,video.videoWidth);c.height=Math.round(c.width*video.videoHeight/video.videoWidth);
   let g=c.getContext('2d');
   let start=await api('/api/start',{method:'POST'});
   if(!start.ok)throw Error(await start.text());
   document.addEventListener('keydown',key);
-  async function send(){g.drawImage(video,0,0,c.width,c.height);let blob=await new Promise(r=>c.toBlob(r,'image/jpeg',.88));if(blob)await api('/api/camera',{method:'POST',body:blob})}
-  (async()=>{while(!stopped){try{await send()}catch(e){if(!stopped)status.textContent=e.message};await wait(10)}})();
+  async function send(){g.drawImage(video,0,0,c.width,c.height);let blob=await new Promise(r=>c.toBlob(r,'image/jpeg',.72));if(blob)await api('/api/camera',{method:'POST',body:blob})}
+  (async()=>{while(!stopped){try{await send()}catch(e){if(!stopped)status.textContent=e.message};await wait(65)}})();
   let nextCheck=0;
   while(!stopped){
     let r=await api('/api/frame');
