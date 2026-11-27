@@ -243,6 +243,12 @@ class Handler(SimpleHTTPRequestHandler):
         s = self.protected()
         if not s:return
         data = self.rfile.read(length)
+        if path == '/api/local-card':
+            import struct
+            if s.card or s.published or not (1000 <= length <= MAX_CARD_SIZE) or not data.startswith(b'\x89PNG\r\n\x1a\n') or data[12:16] != b'IHDR' or struct.unpack('>II',data[16:24]) != (1000,1480):
+                self.reply(b'Invalid local result card',status=400);return
+            s.card=data
+            self.reply();return
         if path == '/api/camera':
             if not s.proc or not s.proc.is_alive():
                 self.reply(b'Session is not active',status=409);return
