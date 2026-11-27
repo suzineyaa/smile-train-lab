@@ -29,16 +29,16 @@ async function originalStart(){
   const sr=await fetch('/api/session',{method:'POST'});
   if(!sr.ok)throw Error(await sr.text());
   sessionToken=(await sr.json()).token;
-  stream=await navigator.mediaDevices.getUserMedia({video:{width:{ideal:960},height:{ideal:540}},audio:false});
+  stream=await navigator.mediaDevices.getUserMedia({video:{width:{ideal:1280},height:{ideal:720},frameRate:{ideal:30,max:30}},audio:false});
   if(stopped||token!==run){stream.getTracks().forEach(t=>t.stop());return}
   video.srcObject=stream;await video.play();
-  let c=document.createElement('canvas');c.width=960;c.height=540;
+  let c=document.createElement('canvas');c.width=video.videoWidth;c.height=video.videoHeight;
   let g=c.getContext('2d');
   let start=await api('/api/start',{method:'POST'});
   if(!start.ok)throw Error(await start.text());
   document.addEventListener('keydown',key);
-  async function send(){g.drawImage(video,0,0,c.width,c.height);let blob=await new Promise(r=>c.toBlob(r,'image/jpeg',.78));if(blob)await api('/api/camera',{method:'POST',body:blob})}
-  (async()=>{while(!stopped){try{await send()}catch(e){if(!stopped)status.textContent=e.message};await wait(35)}})();
+  async function send(){g.drawImage(video,0,0,c.width,c.height);let blob=await new Promise(r=>c.toBlob(r,'image/jpeg',.88));if(blob)await api('/api/camera',{method:'POST',body:blob})}
+  (async()=>{while(!stopped){try{await send()}catch(e){if(!stopped)status.textContent=e.message};await wait(10)}})();
   let nextCheck=0;
   while(!stopped){
     let r=await api('/api/frame');
@@ -50,7 +50,7 @@ async function originalStart(){
     let cr=await api('/api/card',{method:'HEAD'}).catch(()=>null);
     if(cr?.status===200&&!issued){issued=true;let b=await (await api('/api/card')).blob();if(stopped)return;await issueCard(b);return}
     }
-    await wait(35);
+    await wait(10);
   }
  }catch(e){status.hidden=false;status.textContent='실행 오류: '+e.message}
 }
