@@ -32,6 +32,7 @@ def worker_main(camera_q, key_q, frame_q, event_q):
         import cv2
         import numpy as np
         import traceback
+        cv2.setNumThreads(1)
         os.chdir(ROOT)
         source = (ROOT / 'original.py').read_text(encoding='utf-8')
         source = source.replace('cap = find_working_camera()', 'cap = Camera()')
@@ -47,14 +48,22 @@ def worker_main(camera_q, key_q, frame_q, event_q):
                 try:
                     while True:
                         b = camera_q.get_nowait()
-                        decoded = cv2.imdecode(np.frombuffer(b, np.uint8), cv2.IMREAD_COLOR)
-                        if decoded is not None: self.last = decoded
+                        latest = b
                 except queue.Empty: pass
+                if 'latest' in locals():
+                    decoded = cv2.imdecode(np.frombuffer(latest, np.uint8), cv2.IMREAD_COLOR)
+                    if decoded is not None: self.last = decoded
                 return self.last is not None, self.last.copy() if self.last is not None else None
             def release(self): pass
             def isOpened(self): return True
 
+        last_image = None
+        last_encoded = None
         def send_frame(name, img):
+            nonlocal last_image, last_encoded
+            if last_image is not None and np.array_equal(img, last_image):
+                return
+            last_image = img.copy()
             static = bool(np.mean(np.all(img[::16, ::16] == img[0, 0], axis=2)) > .55)
             ok, buf = cv2.imencode('.png', img, [cv2.IMWRITE_PNG_COMPRESSION, 1]) if static else cv2.imencode('.jpg', img, [int(cv2.IMWRITE_JPEG_QUALITY), 90])
             if ok:
@@ -66,7 +75,7 @@ def worker_main(camera_q, key_q, frame_q, event_q):
                     except queue.Full: pass
 
         def wait_key(ms):
-            try: return key_q.get(timeout=max(0.012, min(ms / 1000.0, 0.1)))
+            try: return key_q.get(timeout=max(0.001, min(ms / 1000.0, 0.1)))
             except queue.Empty: return -1
 
         def save_card(path, img):
