@@ -591,7 +591,7 @@ def apply_creepy_distortion(img, face_landmarks):
     yy, xx = np.indices((rh, rw), dtype=np.float32)
     bx = np.zeros((rh, rw), dtype=np.float32)
     by = np.zeros((rh, rw), dtype=np.float32)
-    t = time.time()
+    t = (time.monotonic() * 10.0 % (2.0 * np.pi)) / 10.0
     for pair in ([33, 133], [362, 263], [1, 2], [0, 17]):
         cx, cy = np.mean(local_pts[pair], axis=0)
         dx, dy = xx - cx, yy - cy
