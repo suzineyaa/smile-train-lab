@@ -38,15 +38,19 @@ async function originalStart(){
   if(!start.ok)throw Error(await start.text());
   document.addEventListener('keydown',key);
   async function send(){g.drawImage(video,0,0,c.width,c.height);let blob=await new Promise(r=>c.toBlob(r,'image/jpeg',.78));if(blob)await api('/api/camera',{method:'POST',body:blob})}
-  (async()=>{while(!stopped){try{await send()}catch(e){if(!stopped)status.textContent=e.message};await wait(95)}})();
+  (async()=>{while(!stopped){try{await send()}catch(e){if(!stopped)status.textContent=e.message};await wait(35)}})();
+  let nextCheck=0;
   while(!stopped){
     let r=await api('/api/frame');
     if(r.status===200){let u=URL.createObjectURL(await r.blob());img.src=u;if(prev)URL.revokeObjectURL(prev);prev=u;status.hidden=true}
+    if(performance.now()>=nextCheck){
+    nextCheck=performance.now()+600;
     let err=await (await api('/api/status')).text();
     if(err){status.hidden=false;status.textContent='얼굴 분석 오류: '+err;break}
     let cr=await api('/api/card',{method:'HEAD'}).catch(()=>null);
     if(cr?.status===200&&!issued){issued=true;let b=await (await api('/api/card')).blob();if(stopped)return;await issueCard(b);return}
-    await wait(100);
+    }
+    await wait(35);
   }
  }catch(e){status.hidden=false;status.textContent='실행 오류: '+e.message}
 }
