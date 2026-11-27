@@ -7,6 +7,7 @@ RUN pip install --no-cache-dir -r requirements.txt
 COPY . .
 RUN python -c "import urllib.request; urllib.request.urlretrieve('https://storage.googleapis.com/mediapipe-models/face_landmarker/face_landmarker/float16/1/face_landmarker.task', '/app/face_landmarker.task')"
 RUN useradd -m appuser && mkdir -p /data && chown -R appuser:appuser /app /data
+RUN chmod +x /app/entrypoint.sh
 ENTRYPOINT ["/app/entrypoint.sh"]
 ENV SMILE_DATA_DIR=/data MAX_ACTIVE_SESSIONS=3
 EXPOSE 8000
